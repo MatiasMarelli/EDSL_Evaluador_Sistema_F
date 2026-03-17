@@ -50,6 +50,13 @@ expSub i t (LamT t' u)            = LamT t' (expSub i t u)
 expSub i t (AppT u t')            = AppT (expSub i t u) t'
 
 
+quote :: Value -> LocalTerm
+quote (VLam t l)  = Lam  t l
+quote (VType t l) = undefined
+
+
+typeSub :: Type -> LocalTerm -> Value
+typeSub = undefined
 ----------------------------------------------------------
 
 
@@ -65,8 +72,21 @@ updateExpEnv :: ExpVar -> Value -> Type -> State ()
 updateExpEnv n v t = State(\e -> ((),M.insert n (Left (v,t)) e))
 
 
+eval :: LocalTerm -> State Value
 
+eval (FreeV s)   = do v <- lookForExp s
+                      case v of
+                        Just a -> return a
+                        Nothing -> undefined -- A CHEQUEAR
 
---eval :: LocalTerm -> Value
---eval (FreeV x) = 
+eval (App t1 t2) = do v  <- eval t1
+                      v' <- eval t2
+                      let (Lam t t1') = quote v in eval (expSub 0 (quote v') t1')
 
+eval (Lam t l)   = return (VLam t l)
+
+--VER   VER
+--VER   VER
+--eval (LamT t l)  = return (VType t l)
+
+eval (AppT l t)  = return (typeSub t l)
