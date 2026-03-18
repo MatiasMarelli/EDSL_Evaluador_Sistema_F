@@ -6,11 +6,14 @@ import Prelude
 
 type Env = D.Map String (Either ExpEnv TypeEnv)
 
-newtype State a = State {runState :: Env -> (a,Env)}
+newtype State a = State {runState :: Env -> Either Error (a,Env)}
 
 instance Monad State where
-  return x = State(\e -> (x,e))
-  m >>= f  = State(\e -> let (v,s) = runState m e in runState (f v) s ) 
+  return x = State(\e -> Right (x,e))
+  m >>= f  = State(\e -> case runState m e of
+                         Left err    -> Left err
+                         Right (v,s) -> runState (f v) s
+                  ) 
 
 instance Functor State where
   fmap = liftM
@@ -19,20 +22,22 @@ instance Applicative State where
   pure  = return
   (<*>) = ap 
 
-data Defs = DefT String [String] Type
+data Error = ExpVarNotFound | TypeVarNotFound | InvalidApp | BadDef deriving (Show,Eq)
+
+
+data Defs = DefT Type [String] Type
           | Def String Term
           deriving (Show)
 
-data Type = EmptyT
-          | VarT String
-          | UniT String Type 
+data Type = VarT String
+          | UniT Type Type 
           | FunT Type Type 
           deriving (Show, Eq)  
 
 data Term    = EVar String
              | EAbs String Type Term 
              | EApp Term Term
-             | ETAbs String Term
+             | ETAbs Type Term
              | ETApp Term Type 
              deriving (Show, Eq)
 
@@ -40,7 +45,7 @@ data LocalTerm  = Bound Int
                 | FreeV String 
                 | App LocalTerm LocalTerm
                 | Lam Type LocalTerm
-                | LamT String LocalTerm
+                | LamT Type LocalTerm
                 | AppT LocalTerm Type 
             deriving (Show, Eq)
 
