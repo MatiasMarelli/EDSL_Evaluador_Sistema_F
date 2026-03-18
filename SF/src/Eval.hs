@@ -76,7 +76,7 @@ typeSub' t n (FunT t1 t2)         = FunT (f t1) (f t2)
 
 lookForExp :: ExpVar ->State Value
 lookForExp n = State (\e -> case M.lookup n e of
-                            Nothing            -> Left ExpVarNotFound
+                            Nothing             -> Left ExpVarNotFound
                             Just (Right _)      -> Left BadDef
                             Just (Left (v,_)) -> Right (v , e)
                      )

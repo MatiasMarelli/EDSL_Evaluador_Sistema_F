@@ -25,7 +25,7 @@ instance Applicative State where
 data Error = ExpVarNotFound | TypeVarNotFound | InvalidApp | BadDef deriving (Show,Eq)
 
 
-data Defs = DefT Type [String] Type
+data Defs = DefT Type Type
           | Def String Term
           deriving (Show)
 
@@ -38,7 +38,7 @@ data Term    = EVar String
              | EAbs String Type Term 
              | EApp Term Term
              | ETAbs Type Term
-             | ETApp Term Type 
+             | ETApp Term [Type] 
              deriving (Show, Eq)
 
 data LocalTerm  = Bound Int

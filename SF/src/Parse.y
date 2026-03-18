@@ -61,11 +61,12 @@ Type    :: { Type }
 Defs    : Defexp Defs                { $1 : $2 }
 	|                            { [] }
 
-Defexp  : DEF VART Poli ':=' Type    { DefT (VarT $2) $3 $5 }
+--        DEF VART := Type 
+Defexp  : DEF VART ':=' Type         { DefT (VarT $2) $4 }
 	| DEF VAR '=' Exp            { Def  $2 $4 }
 
-Poli    : VART Poli                  { $1 : $2 }
-	|                            { [] }
+{- Poli    : VART Poli                  { $1 : $2 }
+	|                            { [] } -}
 {
 
 data Token = TAbs
