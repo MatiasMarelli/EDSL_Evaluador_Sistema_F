@@ -22,7 +22,7 @@ instance Applicative State where
   pure  = return
   (<*>) = ap 
 
-data Error = ExpVarNotFound | TypeVarNotFound | InvalidApp | BadDef deriving (Show,Eq)
+data Error = ExpVarNotFound | TypeVarNotFound | InvalidApp | BadExpDef | BadTypeDef deriving (Show,Eq)
 
 
 data Defs = DefT Type Type
@@ -30,7 +30,7 @@ data Defs = DefT Type Type
           deriving (Show)
 
 data Type = VarT String
-          | UniT Type Type 
+          | UniT String Type 
           | FunT Type Type 
           deriving (Show, Eq)  
 
@@ -46,7 +46,7 @@ data LocalTerm  = Bound Int
                 | App LocalTerm LocalTerm
                 | Lam Type LocalTerm
                 | LamT Type LocalTerm
-                | AppT LocalTerm Type 
+                | AppT LocalTerm [Type] 
             deriving (Show, Eq)
 
 data Value = VLam Type LocalTerm 
@@ -57,6 +57,6 @@ type ExpVar = String
 type TypeVar = String
 
 type ExpEnv  = (Value,Type)
-type TypeEnv = ([String],Type)
+type TypeEnv = Type
 
 

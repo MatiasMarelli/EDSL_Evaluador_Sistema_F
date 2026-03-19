@@ -7,7 +7,7 @@ import Parse
 
 
 test :: String
-test = "(/\\X. /\\Y. \\x:X -> Y -> Y. \\b: X -> Y . x b) <List Nat> " 
+test = "(/\\X. /\\Y. \\x:X -> Y -> Y. \\b: X -> Y . x b) <List Nat>" 
     --"((/\\ X. \\x: X -> X . x) <Nat>) ((/\\Y./\\Z. \\y:Y -> Z -> Y. y y) <List> ) "
 
 
