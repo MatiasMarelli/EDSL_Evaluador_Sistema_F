@@ -28,8 +28,9 @@ import Data.Maybe
   DEF      { TDef }
   '='      { TEquals }
   ':='     { TTEq }
+  '::'     { TTExp }
   
-%left  '=' ':='
+%left  '=' ':=' '::'
 %right '->'
 %right '4' '/\\'
 %right '\\' '.'
@@ -62,7 +63,8 @@ Defs    : Defexp Defs                { $1 : $2 }
 	|                            { [] }
 
 --        DEF VART := Type 
-Defexp  : DEF VART ':=' Type         { DefT (VarT $2) $4 }
+Defexp  : DEF VART Poli ':=' Type    { DefT (VarT $2) $3 $5 }
+        | DEF VAR '::' Type          { TypeExp $2 $4 }
 	| DEF VAR '=' Exp            { Def  $2 $4 }
 
 Poli    : VART Poli                  { (VarT $1) : $2 }
@@ -85,6 +87,7 @@ data Token = TAbs
            | TDef
            | TEquals
            | TTEq 
+           | TTExp
      deriving Show
 
 
@@ -113,12 +116,12 @@ catchM m k = \s l -> case m s l of
 getLineNumber :: M LineNumber
 getLineNumber = \s l -> Ok l
 
-getResult :: ParseResult a -> a
-getResult (Ok a) = a
-getResult _ = undefined
+getResult :: ParseResult a -> Either a String
+getResult (Ok a) = Left a
+getResult (Failed e) = Right e
 
 parseError :: Token -> M a 
-parseError _ = \ s i -> Failed $ "Linea "++(show (i::LineNumber))++": Error de parseo "++(s) 
+parseError t = \ s i -> Failed $ "Linea "++(show (i::LineNumber))++": Error de parseo "++(s) ++" " ++ (show t)
 
 
 lexer :: (Token -> M a ) -> M a 
@@ -133,6 +136,7 @@ lexer cont s = case s of
                     (':':('=':cs)) -> cont TTEq cs
                     ('=': cs) -> cont TEquals cs
                     ('.': cs) -> cont TDot cs
+                    (':':(':' :cs)) -> cont TTExp cs
                     (':': cs) -> cont TColon cs 
                     ('(': cs) -> cont TOpenP cs
                     (')': cs) -> cont TCloseP cs 

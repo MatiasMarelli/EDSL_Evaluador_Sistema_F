@@ -67,8 +67,8 @@ typeSub' t n (VarT s) | s == n    = t
                       | otherwise = VarT s
 typeSub' t n (FunT t1 t2)         = FunT (f t1) (f t2)
                                   where f = (typeSub' t n)
-typeSub' t n (UniT tn t1)         = UniT tn (typeSub' t n t1)
-                                   
+typeSub' t n (UniT tn t1)         | not (n == tn)   = UniT tn (typeSub' t n t1)
+                                  | otherwise       = UniT tn t1
     
 evalType :: [Type] -> State Type
 evalType [x]    = case x of
@@ -94,31 +94,6 @@ evalType' _ _               = throwTypeDef
 
 
 
-lookForExp :: String ->State Value
-lookForExp n = State (\e -> case M.lookup n e of
-                            Nothing             -> Left ExpVarNotFound
-                            Just (Right _)      -> Left BadExpDef
-                            Just (Left (v,_))   -> Right (v , e)
-                     )
-
-updateExpEnv :: ExpVar -> Value -> Type -> State ()
-updateExpEnv n v t = State(\e -> Right ((),M.insert n (Left (v,t)) e))
-
-
-lookForType :: String -> State Type
-lookForType n = State (\e -> case M.lookup n e of
-                             Nothing        -> Left TypeVarNotFound
-                             Just (Left _)  -> Left BadTypeDef
-                             Just (Right t) -> Right (t,e)
-  
-  )
-
-throwApp :: State Value
-throwApp = State(\_ -> Left InvalidApp)
-
-
-throwTypeDef :: State Type
-throwTypeDef = State(\_ -> Left BadTypeDef)
 
 ---------------------------------------------------------------------------------
 eval :: LocalTerm -> State Value

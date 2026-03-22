@@ -1,0 +1,5 @@
+
+def Nat := 4 N . (N -> N) -> N -> N
+def List X := 4 R . (X -> R -> R) -> R -> R
+
+def lenght :: List Nat -> Nat 

@@ -27,6 +27,7 @@ library
   exposed-modules:
       Common
       Eval
+      File
       Parse
   other-modules:
       Paths_SF

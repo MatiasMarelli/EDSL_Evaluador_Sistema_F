@@ -1,10 +1,11 @@
 module Common where
-import Data.Map     as D
+import Data.Map     as M
 import Control.Monad (liftM , ap)
 import Data.Maybe
 import Prelude
+import Control.Monad.IO.Class
 
-type Env = D.Map String (Either ExpEnv TypeEnv)
+type Env = M.Map String (Either ExpEnv TypeEnv)
 
 newtype State a = State {runState :: Env -> Either Error (a,Env)}
 
@@ -22,10 +23,55 @@ instance Applicative State where
   pure  = return
   (<*>) = ap 
 
-data Error = ExpVarNotFound | TypeVarNotFound | InvalidApp | BadExpDef | BadTypeDef deriving (Show,Eq)
+
+------------------------------------------------------------------------------------------
+{- liftIO :: IO a -> State (IO a)
+liftIO m = State(\e -> do s <- m
+                          return (s,e)) -}
+
+lookForExp :: String ->State Value
+lookForExp n = State (\e -> case M.lookup n e of
+                            Nothing             -> Left ExpVarNotFound
+                            Just (Right _)      -> Left BadExpDef
+                            Just (Left (v,_))   -> Right (v , e)
+                     )
+
+updateExpEnv :: String -> Value -> Type -> State ()
+updateExpEnv n v t = State(\e -> Right ((),M.insert n (Left (v,t)) e))
+
+updateTypeEnv :: String -> Type -> State ()
+updateTypeEnv n t  = State (\e -> Right ((), M.insert n (Right t) e)) 
 
 
-data Defs = DefT Type Type
+lookForType :: String -> State Type
+lookForType n = State (\e -> case M.lookup n e of
+                             Nothing        -> Left TypeVarNotFound
+                             Just (Left _)  -> Left BadTypeDef
+                             Just (Right t) -> Right (t,e))
+
+getState :: State Env
+getState = State(\e -> Right(e,e) )
+
+throwApp :: State Value
+throwApp = State(\_ -> Left InvalidApp)
+
+throwTypeDef :: State Type
+throwTypeDef = State(\_ -> Left BadTypeDef)
+
+throwExpDef :: State a
+throwExpDef = State(\_ -> Left BadExpDef)
+
+throwPar :: String -> State a
+throwPar s = State(\_ -> Left (Par s))
+------------------------------------------------------------------------------------------
+
+
+
+data Error = ExpVarNotFound | TypeVarNotFound| Par String | InvalidApp | BadExpDef | BadTypeDef deriving (Show,Eq)
+
+
+data Defs = DefT Type [Type] Type
+          | TypeExp String Type
           | Def String Term
           deriving (Show)
 
