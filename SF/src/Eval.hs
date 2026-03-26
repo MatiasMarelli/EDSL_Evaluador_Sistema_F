@@ -22,7 +22,7 @@ convertion' xs (ETApp l ts) = AppT (convertion' xs l) ts
 convertion' xs (EVar n)     = case look xs n of
                               Nothing -> FreeV n
                               Just i -> Bound i
-
+-- hola te amoooo :D (el colo)
 ----------------------------------------------------------
 
 look :: [String] -> String -> Maybe Int
@@ -33,7 +33,9 @@ findBound _ [] _ = Nothing
 findBound i (x:xs) n = if x == n then Just i
                        else findBound (i+1) xs n
 
+-----------------------------------------------------------
 
+convertionType :: [String] -> Type -> LocalType
 
 ----------------------------------------------------------
  

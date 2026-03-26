@@ -80,6 +80,11 @@ data Type = VarT String
           | FunT Type Type 
           deriving (Show, Eq)  
 
+data LocalType = BoundT Int
+               | FreeT String
+               | Uni String LocalType
+               | Fun LocalType LocalType
+
 data Term    = EVar String
              | EAbs String Type Term 
              | EApp Term Term
