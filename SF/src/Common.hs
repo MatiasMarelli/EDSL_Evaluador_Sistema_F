@@ -25,9 +25,7 @@ instance Applicative State where
 
 
 ------------------------------------------------------------------------------------------
-{- liftIO :: IO a -> State (IO a)
-liftIO m = State(\e -> do s <- m
-                          return (s,e)) -}
+
 
 lookForExp :: String ->State Value
 lookForExp n = State (\e -> case M.lookup n e of
@@ -57,6 +55,8 @@ throwApp = State(\_ -> Left InvalidApp)
 
 throwTypeDef :: State Type
 throwTypeDef = State(\_ -> Left BadTypeDef)
+throwTypeApp :: State LocalType
+throwTypeApp = State(\_ -> Left InvalidTypeApp)
 
 throwExpDef :: State a
 throwExpDef = State(\_ -> Left BadExpDef)
@@ -67,7 +67,7 @@ throwPar s = State(\_ -> Left (Par s))
 
 
 
-data Error = ExpVarNotFound | TypeVarNotFound| Par String | InvalidApp | BadExpDef | BadTypeDef deriving (Show,Eq)
+data Error = ExpVarNotFound | TypeVarNotFound| Par String | InvalidApp| InvalidTypeApp | BadExpDef | BadTypeDef deriving (Show,Eq)
 
 
 data Defs = DefT Type [Type] Type
@@ -82,8 +82,9 @@ data Type = VarT String
 
 data LocalType = BoundT Int
                | FreeT String
-               | Uni String LocalType
+               | Uni LocalType
                | Fun LocalType LocalType
+               deriving (Show,Eq)
 
 data Term    = EVar String
              | EAbs String Type Term 
@@ -95,16 +96,16 @@ data Term    = EVar String
 data LocalTerm  = Bound Int
                 | FreeV String 
                 | App LocalTerm LocalTerm
-                | Lam Type LocalTerm
-                | LamT Type LocalTerm
-                | AppT LocalTerm [Type] 
+                | Lam LocalType LocalTerm
+                | LamT LocalTerm
+                | AppT LocalTerm [LocalType] 
             deriving (Show, Eq)
 
-data Value = VLam Type LocalTerm 
-           | VType Type LocalTerm
+data Value = VLam LocalType LocalTerm 
+           | VType LocalTerm
            deriving (Show, Eq)
 
-type ExpVar = String
+type ExpVar  = String
 type TypeVar = String
 
 type ExpEnv  = (Value,Type)

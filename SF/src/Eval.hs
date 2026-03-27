@@ -1,6 +1,7 @@
 module Eval where
 import Common 
 import Data.Map    as M
+import Data.List   as L
 
 
 convertion :: Term -> LocalTerm
@@ -9,15 +10,15 @@ convertion = convertionExp' [] []
 ----------------------------------------------------------
 convertionExp' :: [String] -> [String] -> Term -> LocalTerm
 
-convertionExp' xs ts (EAbs n t l) = Lam (convertionExp' xs ts t) (convertionExp' (n:xs) ts l)
+convertionExp' xs ts (EAbs n t l) = Lam (convertionType' ts t) (convertionExp' (n:xs) ts l)
 
 convertionExp' xs ts (EApp t1 t2) = let (v1,v2) = (fun t1,fun t2)
                                     in App v1 v2
                                     where fun = (convertionExp' xs ts)
+-- holiiiii
+convertionExp' xs ts (ETAbs (VarT n) l)  = LamT (convertionExp' xs (n:ts) l)
 
-convertionExp' xs ts (ETAbs (VarT n) l)  = LamT (convertionExp' xs l)
-
-convertionExp' xs ts (ETApp l ts) = AppT (convertionExp' xs l) ts
+convertionExp' xs ts (ETApp l t) = AppT (convertionExp' xs ts l) (L.map (convertionType' ts) t)
 
 convertionExp' xs ts (EVar n)     = case look xs n of
                                    Nothing -> FreeV n
@@ -39,68 +40,68 @@ convertionType :: Type -> LocalType
 convertionType = convertionType' []
 
 convertionType' :: [String] -> Type -> LocalType
-convertionType' xs (UniT n t)   = Uni n (convertionType' (n:xs) t)
+convertionType' xs (UniT n t)   = Uni (convertionType' (n:xs) t)
 convertionType' xs (FunT t1 t2) = Fun (convertionType' xs t1) (convertionType' xs t2)
 convertionType' xs (VarT n)     = case look xs n of
                                     Nothing -> FreeT n
                                     Just i  -> BoundT i
 
 ----------------------------------------------------------
- 
+
+
+
+-----------------------------------------------------------------------------------------------
+
 expSub :: Int -> LocalTerm -> LocalTerm -> LocalTerm 
 expSub i t (Bound j)  | i == j    = t
                       | otherwise = Bound j
 expSub _ _ (FreeV n)              = FreeV n
 expSub i t (App t1 t2)            = App (expSub i t t1) (expSub i t t2)
 expSub i t (Lam t' u)             = Lam t' (expSub (i+1) t u)
-expSub i t (LamT t' u)            = LamT t' (expSub i t u)
+expSub i t (LamT u)               = LamT (expSub i t u)
 expSub i t (AppT u t')            = AppT (expSub i t u) t'
 
 
 quote :: Value -> LocalTerm
 quote (VLam t l)  = Lam  t l
-quote (VType t l) = LamT t l
+quote (VType l)   = undefined 
 
---REESCRIBIR LINDO PORFA
-typeSub :: Type -> String -> LocalTerm -> LocalTerm
+typeSub :: Int -> LocalType -> LocalType -> LocalType
+typeSub i t (BoundT j) | i == j    = t
+                       | otherwise = BoundT j
+typeSub _ _ (FreeT n)              = FreeT n 
+typeSub i t (Uni t')               = Uni (typeSub i t t')
+typeSub i t (Fun t1 t2)            = Fun (typeSub i t t1) (typeSub i t t2)
+----------------------------------------------------------------------------------------------
 
-typeSub _ _ (FreeV v)           = FreeV v 
-typeSub t n (App t1 t2)         = App (typeSub t n t1) (typeSub t n t2)
-typeSub t n (Lam t1 e)          = Lam (typeSub' t n t1) (typeSub t n e)
-typeSub t n (LamT t1 e)         = LamT t1 (typeSub t n e)
-typeSub t n (AppT e t1)         = AppT (typeSub t n e) t1 
-typeSub _ _ (Bound i)           = Bound i
-
-
-typeSub' :: Type -> String -> Type -> Type
-typeSub' t n (VarT s) | s == n    = t
-                      | otherwise = VarT s
-typeSub' t n (FunT t1 t2)         = FunT (f t1) (f t2)
-                                  where f = (typeSub' t n)
-typeSub' t n (UniT tn t1)         | not (n == tn)   = UniT tn (typeSub' t n t1)
-                                  | otherwise       = UniT tn t1
-    
-evalType :: [Type] -> State Type
-evalType [x]    = case x of
-                  (VarT n) -> lookForType n
-                  _        -> throwTypeDef
-                  
+evalType :: [LocalType] -> State LocalType
+evalType [x] = case x of
+                 (FreeT n)  -> do t <- lookForType n 
+                                  return (convertionType t)
+                 (BoundT i) -> return x
+                 _          -> throwTypeApp
 evalType (x:xs) = case x of
-                  (VarT n) -> do t' <- lookForType n 
-                                 evalType' t' xs
-                  _        -> throwTypeDef
+                    (FreeT n)  -> do t <- lookForType n
+                                     return  (evalType' 0 (convertionType t ) xs)
+                    _          -> throwTypeApp
 
-
-evalType []     = throwTypeDef
-
-
-evalType' :: Type -> [Type] -> State Type
-evalType' (UniT n t) [x]    = return (typeSub' x n t)  
-evalType' (UniT n t) (x:xs) = let t' = typeSub' x n t
-                              in evalType' t' xs                              
-
-evalType' _ _               = throwTypeDef
+evalType' :: Int -> LocalType -> [LocalType] -> LocalType
+evalType' _ t []      = t
+evalType' i t (t':ts) = evalType' (i+1) (typeSub i t' t) ts
 ----------------------------------------------------------
+
+instanceTerm :: Int -> LocalTerm -> LocalType -> State LocalTerm
+instanceTerm i (FreeV s) t   = do v <- lookForExp s
+                                  instanceTerm i (quote v) t
+instanceTerm i (App t1 t2) t = do t1' <- instanceTerm i t1 t
+                                  t2' <- instanceTerm i t2 t 
+                                  return (App t1' t2')
+instanceTerm i (Lam t' e) t  = do t1 <- instanceTerm i e t
+                                  return (Lam (typeSub i t t') t1)
+instanceTerm i (LamT  e) t   = do t1 <- instanceTerm (i+1) e t
+                                  return (LamT t1)
+instanceTerm i (AppT e ts) t = do t1 <- instanceTerm i e t
+                                  return (AppT t1 (L.map (typeSub i t) ts))
 
 
 
@@ -117,14 +118,15 @@ eval (App t1 t2) = do v  <- eval t1
                         (Lam _ t1') -> eval (expSub 0 (quote v') t1')
                         _           -> throwApp
 
-eval (Lam t l)   = return (VLam t l)
-eval (LamT t l)  = return (VType t l)
+eval (Lam  t l)  = return (VLam t l)
+eval (LamT l)  = return (VType l)
 
 eval (AppT l t)  = do v  <- eval l
                       t' <- evalType t
                       case v of 
-                        (VType (VarT n) e) -> eval (typeSub t' n e)
-                        _                  -> throwApp
+                        (VType e) -> do e' <- instanceTerm 0 e t'
+                                        eval e'
+                        _         -> throwApp
                                                   
 
 eval _           = throwApp
