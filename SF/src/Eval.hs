@@ -9,13 +9,13 @@ convertion = convertionExp' [] []
 ----------------------------------------------------------
 convertionExp' :: [String] -> [String] -> Term -> LocalTerm
 
-convertionExp' xs ts (EAbs n t l) = Lam (convertionType' ts t) (convertionExp' (n:xs) ts l)
+convertionExp' xs ts (EAbs n t l) = Lam (convertionExp' xs ts t) (convertionExp' (n:xs) ts l)
 
 convertionExp' xs ts (EApp t1 t2) = let (v1,v2) = (fun t1,fun t2)
                                     in App v1 v2
                                     where fun = (convertionExp' xs ts)
 
-convertionExp' xs ts (ETAbs (VarT n) l)  = LamT t (convertionExp' xs l)
+convertionExp' xs ts (ETAbs (VarT n) l)  = LamT (convertionExp' xs l)
 
 convertionExp' xs ts (ETApp l ts) = AppT (convertionExp' xs l) ts
 
