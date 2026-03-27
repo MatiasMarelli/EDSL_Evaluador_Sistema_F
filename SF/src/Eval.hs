@@ -5,23 +5,23 @@ import Data.Map    as M
 
 convertion :: Term -> LocalTerm
 
-convertion = convertion' []
+convertion = convertionExp' [] []
 ----------------------------------------------------------
-convertion' :: [String] -> Term -> LocalTerm
+convertionExp' :: [String] -> [String] -> Term -> LocalTerm
 
-convertion' xs (EAbs n t l) = Lam t (convertion' (n:xs) l)
+convertionExp' xs ts (EAbs n t l) = Lam (convertionType' ts t) (convertionExp' (n:xs) ts l)
 
-convertion' xs (EApp t1 t2) = let (v1,v2) = (fun t1,fun t2)
-                              in App v1 v2
-                              where fun = (convertion' xs)
+convertionExp' xs ts (EApp t1 t2) = let (v1,v2) = (fun t1,fun t2)
+                                    in App v1 v2
+                                    where fun = (convertionExp' xs ts)
 
-convertion' xs (ETAbs t l)  = LamT t (convertion' xs l)
+convertionExp' xs ts (ETAbs (VarT n) l)  = LamT t (convertionExp' xs l)
 
-convertion' xs (ETApp l ts) = AppT (convertion' xs l) ts
+convertionExp' xs ts (ETApp l ts) = AppT (convertionExp' xs l) ts
 
-convertion' xs (EVar n)     = case look xs n of
-                              Nothing -> FreeV n
-                              Just i -> Bound i
+convertionExp' xs ts (EVar n)     = case look xs n of
+                                   Nothing -> FreeV n
+                                   Just i -> Bound i
 -- hola te amoooo :D (el colo)
 ----------------------------------------------------------
 
@@ -35,7 +35,15 @@ findBound i (x:xs) n = if x == n then Just i
 
 -----------------------------------------------------------
 
-convertionType :: [String] -> Type -> LocalType
+convertionType :: Type -> LocalType
+convertionType = convertionType' []
+
+convertionType' :: [String] -> Type -> LocalType
+convertionType' xs (UniT n t)   = Uni n (convertionType' (n:xs) t)
+convertionType' xs (FunT t1 t2) = Fun (convertionType' xs t1) (convertionType' xs t2)
+convertionType' xs (VarT n)     = case look xs n of
+                                    Nothing -> FreeT n
+                                    Just i  -> BoundT i
 
 ----------------------------------------------------------
  
