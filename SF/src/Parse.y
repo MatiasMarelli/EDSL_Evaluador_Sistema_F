@@ -39,7 +39,7 @@ import Data.Maybe
 
 Exp     :: { Term }
         : Atom '<' Poli '>'          { ETApp $1 $3 }
-        | '/\\' VART '.' Exp         { ETAbs (VarT $2) $4 }
+        | '/\\' VART '.' Exp         { ETAbs (VarT $2 []) $4 }
         | '\\' VAR ':' Type '.' Exp  { EAbs $2 $4 $6 }	
         | NAbs                       { $1 }
 
@@ -56,18 +56,18 @@ Atom    :: { Term }
 Type    :: { Type }
         : Type '->' Type             { FunT $1 $3 }
         | '(' Type ')'               { $2 }
-        | VART                       { VarT $1 }
+        | VART Poli                  { VarT $1 $2 }
         | '4' VART '.' Type          { UniT $2 $4 }
 
 Defs    : Defexp Defs                { $1 : $2 }
 	|                            { [] }
 
---        DEF VART := Type 
-Defexp  : DEF VART Poli ':=' Type    { DefT (VarT $2) $3 $5 }
+ 
+Defexp  : DEF VART Poli ':=' Type    { DefT (VarT $2 []) $3 $5 }
         | DEF VAR '::' Type          { TypeExp $2 $4 }
 	| DEF VAR '=' Exp            { Def  $2 $4 }
 
-Poli    : VART Poli                  { (VarT $1) : $2 }
+Poli    : Type Poli                  { $1 : $2 }
 	|                            { [] } 
 {
 

@@ -17,7 +17,7 @@ convertDefT (DefT _ xs t) = convertDefT' xs t
 
 convertDefT':: [Type] -> Type -> Type
 convertDefT' [] t     = t
-convertDefT' ((VarT n):ts) t = UniT n (convertDefT' ts t) 
+convertDefT' ((VarT n []): ts) t = UniT n (convertDefT' ts t) 
 
 compileFiles :: IO Env
 compileFiles = do s <- liftIO (readFile prelude)
@@ -48,20 +48,20 @@ parseFile xs = do e <- aux (concat xs)
                   case e of 
                     [] -> do s <- getState
                              return s
-                    _  -> do throwExpDef
+                    _  -> do throwExpDef (show e)
                     
                        
 
 aux :: [Defs] -> State [Defs]
 aux []       = return []
 aux [x]      = case x of
-                (DefT (VarT n) ts t) -> do updateTypeEnv n (convertDefT x)
-                                           return []
-                _                    -> return [x] 
+                (DefT (VarT n []) ts t) -> do updateTypeEnv n (convertDefT x)
+                                              return []
+                _                       -> return [x] 
 aux (x:y:xs) = case x of
                  (Def _ _)            -> return [x]
-                 (DefT (VarT n) ts t) -> do updateTypeEnv n (convertDefT x)
-                                            aux (y:xs)
+                 (DefT (VarT n []) ts t) -> do updateTypeEnv n (convertDefT x)
+                                               aux (y:xs)
                  (TypeExp n t)        -> case y of
                                           (Def n' e) -> (if n == n' then do v <- eval (convertion e)
                                                                             updateExpEnv n v t

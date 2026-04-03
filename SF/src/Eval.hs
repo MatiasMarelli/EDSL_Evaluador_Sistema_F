@@ -16,13 +16,14 @@ convertionExp' xs ts (EApp t1 t2) = let (v1,v2) = (fun t1,fun t2)
                                     in App v1 v2
                                     where fun = (convertionExp' xs ts)
 -- holiiiii
-convertionExp' xs ts (ETAbs (VarT n) l)  = LamT (convertionExp' xs (n:ts) l)
+convertionExp' xs ts (ETAbs (VarT n []) l)  = LamT (convertionExp' xs (n:ts) l)
 
 convertionExp' xs ts (ETApp l t) = AppT (convertionExp' xs ts l) (L.map (convertionType' ts) t)
 
 convertionExp' xs ts (EVar n)     = case look xs n of
                                    Nothing -> FreeV n
                                    Just i -> Bound i
+
 -- hola te amoooo :D (el colo)
 ----------------------------------------------------------
 
@@ -42,9 +43,9 @@ convertionType = convertionType' []
 convertionType' :: [String] -> Type -> LocalType
 convertionType' xs (UniT n t)   = Uni (convertionType' (n:xs) t)
 convertionType' xs (FunT t1 t2) = Fun (convertionType' xs t1) (convertionType' xs t2)
-convertionType' xs (VarT n)     = case look xs n of
-                                    Nothing -> FreeT n
-                                    Just i  -> BoundT i
+convertionType' xs (VarT n ts)     = case look xs n of
+                                       Nothing -> FreeT n (L.map (convertionType' xs) ts)
+                                       Just i  -> BoundT i
 
 ----------------------------------------------------------
 
@@ -64,25 +65,29 @@ expSub i t (AppT u t')            = AppT (expSub i t u) t'
 
 quote :: Value -> LocalTerm
 quote (VLam t l)  = Lam  t l
-quote (VType l)   = undefined 
+quote (VType l)   = LamT l  
 
 typeSub :: Int -> LocalType -> LocalType -> LocalType
 typeSub i t (BoundT j) | i == j    = t
                        | otherwise = BoundT j
-typeSub _ _ (FreeT n)              = FreeT n 
+typeSub i t (FreeT n ts)           = FreeT n (L.map (typeSub i t) ts) 
 typeSub i t (Uni t')               = Uni (typeSub i t t')
 typeSub i t (Fun t1 t2)            = Fun (typeSub i t t1) (typeSub i t t2)
 ----------------------------------------------------------------------------------------------
 
 evalType :: [LocalType] -> State LocalType
 evalType [x] = case x of
-                 (FreeT n)  -> do t <- lookForType n 
-                                  return (convertionType t)
-                 (BoundT i) -> return x
-                 _          -> throwTypeApp
+                 (FreeT n ts)   -> do t   <- lookForType n  
+                                      return (evalType' 0 (convertionType t) ts )
+                 (BoundT i)  -> return x
+                 (Fun t1 t2) -> do t1' <- evalType [t1]
+                                   t2' <- evalType [t2]
+                                   return (Fun t1' t2')
+                 _           -> throwTypeApp
 evalType (x:xs) = case x of
-                    (FreeT n)  -> do t <- lookForType n
-                                     return  (evalType' 0 (convertionType t ) xs)
+                    (FreeT n ts)  -> do t  <- lookForType n
+                                        t' <- evalType [x] 
+                                        return  (evalType' 0 t' xs)
                     _          -> throwTypeApp
 
 evalType' :: Int -> LocalType -> [LocalType] -> LocalType

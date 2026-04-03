@@ -30,7 +30,7 @@ instance Applicative State where
 lookForExp :: String ->State Value
 lookForExp n = State (\e -> case M.lookup n e of
                             Nothing             -> Left ExpVarNotFound
-                            Just (Right _)      -> Left BadExpDef
+                            Just (Right _)      -> Left (BadExpDef ("Variable " ++ n ++ " was not an expresion")) 
                             Just (Left (v,_))   -> Right (v , e)
                      )
 
@@ -58,8 +58,8 @@ throwTypeDef = State(\_ -> Left BadTypeDef)
 throwTypeApp :: State LocalType
 throwTypeApp = State(\_ -> Left InvalidTypeApp)
 
-throwExpDef :: State a
-throwExpDef = State(\_ -> Left BadExpDef)
+throwExpDef :: String -> State a
+throwExpDef s = State(\_ -> Left (BadExpDef s))
 
 throwPar :: String -> State a
 throwPar s = State(\_ -> Left (Par s))
@@ -67,7 +67,7 @@ throwPar s = State(\_ -> Left (Par s))
 
 
 
-data Error = ExpVarNotFound | TypeVarNotFound| Par String | InvalidApp| InvalidTypeApp | BadExpDef | BadTypeDef deriving (Show,Eq)
+data Error = ExpVarNotFound | TypeVarNotFound| Par String | InvalidApp| InvalidTypeApp | BadExpDef String | BadTypeDef deriving (Show,Eq)
 
 
 data Defs = DefT Type [Type] Type
@@ -75,13 +75,13 @@ data Defs = DefT Type [Type] Type
           | Def String Term
           deriving (Show)
 
-data Type = VarT String
+data Type = VarT String [Type]
           | UniT String Type 
           | FunT Type Type 
           deriving (Show, Eq)  
 
 data LocalType = BoundT Int
-               | FreeT String
+               | FreeT String [LocalType]
                | Uni LocalType
                | Fun LocalType LocalType
                deriving (Show,Eq)
