@@ -83,12 +83,14 @@ evalType [x] = case x of
                  (Fun t1 t2) -> do t1' <- evalType [t1]
                                    t2' <- evalType [t2]
                                    return (Fun t1' t2')
-                 _           -> throwTypeApp
+                 (Uni t)     -> do t' <- evalType [t]
+                                   return (Uni t')
+                 --_           -> throwTypeApp ("In Function evalType: "++show x)
 evalType (x:xs) = case x of
                     (FreeT n ts)  -> do t  <- lookForType n
-                                        t' <- evalType [x] 
+                                        t' <- evalType ((convertionType t):ts) 
                                         return  (evalType' 0 t' xs)
-                    _          -> throwTypeApp
+                    _          -> throwTypeApp (show x)
 
 evalType' :: Int -> LocalType -> [LocalType] -> LocalType
 evalType' _ t []      = t
@@ -98,6 +100,7 @@ evalType' i t (t':ts) = evalType' (i+1) (typeSub i t' t) ts
 instanceTerm :: Int -> LocalTerm -> LocalType -> State LocalTerm
 instanceTerm i (FreeV s) t   = do v <- lookForExp s
                                   instanceTerm i (quote v) t
+instanceTerm _ (Bound j) _   = return (Bound j)
 instanceTerm i (App t1 t2) t = do t1' <- instanceTerm i t1 t
                                   t2' <- instanceTerm i t2 t 
                                   return (App t1' t2')
@@ -121,7 +124,7 @@ eval (App t1 t2) = do v  <- eval t1
                       v' <- eval t2
                       case quote v of
                         (Lam _ t1') -> eval (expSub 0 (quote v') t1')
-                        _           -> throwApp
+                        e           -> throwApp (show e)
 
 eval (Lam  t l)  = return (VLam t l)
 eval (LamT l)  = return (VType l)
@@ -131,7 +134,7 @@ eval (AppT l t)  = do v  <- eval l
                       case v of 
                         (VType e) -> do e' <- instanceTerm 0 e t'
                                         eval e'
-                        _         -> throwApp
+                        _         -> throwApp (show v)
                                                   
 
-eval _           = throwApp
+eval e           = throwApp (show e)

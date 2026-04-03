@@ -43,20 +43,21 @@ updateTypeEnv n t  = State (\e -> Right ((), M.insert n (Right t) e))
 
 lookForType :: String -> State Type
 lookForType n = State (\e -> case M.lookup n e of
-                             Nothing        -> Left TypeVarNotFound
+                             Nothing        -> Left (TypeVarNotFound n)
                              Just (Left _)  -> Left BadTypeDef
                              Just (Right t) -> Right (t,e))
 
 getState :: State Env
 getState = State(\e -> Right(e,e) )
 
-throwApp :: State Value
-throwApp = State(\_ -> Left InvalidApp)
+throwApp :: String -> State Value
+throwApp s = State(\_ -> Left (InvalidApp s))
 
 throwTypeDef :: State Type
 throwTypeDef = State(\_ -> Left BadTypeDef)
-throwTypeApp :: State LocalType
-throwTypeApp = State(\_ -> Left InvalidTypeApp)
+
+throwTypeApp ::String -> State LocalType
+throwTypeApp s = State(\_ -> Left (InvalidTypeApp s))
 
 throwExpDef :: String -> State a
 throwExpDef s = State(\_ -> Left (BadExpDef s))
@@ -67,7 +68,7 @@ throwPar s = State(\_ -> Left (Par s))
 
 
 
-data Error = ExpVarNotFound | TypeVarNotFound| Par String | InvalidApp| InvalidTypeApp | BadExpDef String | BadTypeDef deriving (Show,Eq)
+data Error = ExpVarNotFound | TypeVarNotFound String | Par String | InvalidApp String| InvalidTypeApp String | BadExpDef String | BadTypeDef deriving (Show,Eq)
 
 
 data Defs = DefT Type [Type] Type

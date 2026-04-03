@@ -1,6 +1,6 @@
 
-def Nat := 4 N . (N -> N) -> N -> N
-def List X := 4 R . (X -> R -> R) -> R -> R
+def Nat := 4 N . ((N -> N) -> N -> N)
+def List X := 4 R . ((X -> R -> R) -> R -> R)
 
 def nil :: 4 X.List X
 def nil = /\ X./\R. \c: X -> Y -> Y. \n:Y. n
@@ -18,4 +18,7 @@ def lenght :: 4 X. List X -> Nat
 def lenght = /\ X. \xs:List X. (xs <Nat>) (\x:X.\r:Nat.(suc r)) (zero <Nat>)
 
 def udt :: List Nat
-def udt = (cons <Nat>) (suc (suc (suc (zero <Nat>)))) ((cons <Nat>) (suc (suc (zero <Nat>))) ((cons <Nat> )(suc (zero <Nat>)) (nil <X>)))
+def udt = (cons <Nat>) (suc (suc (suc (zero <Nat>)))) ((cons <Nat>) (suc (suc (zero <Nat>))) ((cons <Nat> )(suc (zero <Nat>)) (nil <Nat>)))
+
+def alenNat :: Nat
+def alenNat = (lenght <Nat>) udt
