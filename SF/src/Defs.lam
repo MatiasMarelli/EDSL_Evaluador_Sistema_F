@@ -35,3 +35,18 @@ def listcinco = (cons <Nat>) (suc(zero <Nat>)) ((cons <Nat>) (zero <Nat>) ((cons
 
 def lencinco :: Nat
 def lencinco = (lenght <Nat>) listcinco
+
+
+def Bool := 4 B. B -> B -> B
+
+def true  :: Bool
+def true  = /\X. \t:X. \f:X . t
+
+def false :: Bool
+def false = /\X. \t:X. \f:X . f
+
+def if :: 4 X. X -> X
+def if = /\X. \id:X. id
+
+def quiza :: Bool -> Int
+def quiza = \b:Bool. ((if <Bool>) b) (zero <Nat>) (suc (zero <Nat>))

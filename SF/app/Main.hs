@@ -5,7 +5,7 @@ import Data.Map as M
 import Parse
 import Data.Maybe
 import TypeCheck (checkType)
-import File (compileFiles)
+import File (compileFiles,unLeft)
 
 
 test :: String
@@ -25,5 +25,5 @@ main = undefined
 
 ej :: IO (Either String LocalType)
 ej = do v <- compileFiles
-        let t = checkType v (FreeV "lencinco")
+        let t = checkType v  (App (convertion (unLeft ( getResult (expPar "\\b:Int. ((if <Bool>) b) (zero <Nat>) (suc (zero <Nat>))")))) (FreeV "true")) 
         return t
