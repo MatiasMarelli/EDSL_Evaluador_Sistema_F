@@ -22,3 +22,16 @@ def udt = (cons <Nat>) (suc (suc (suc (zero <Nat>)))) ((cons <Nat>) (suc (suc (z
 
 def alenNat :: Nat
 def alenNat = (lenght <Nat>) udt
+
+def tres :: Nat
+def tres = suc(suc (suc (zero <Nat>)))
+
+def cinco :: Nat
+def cinco = suc(suc(suc(suc (suc (zero <Nat>)))))
+
+def listcinco :: List Nat
+def listcinco = (cons <Nat>) (suc(zero <Nat>)) ((cons <Nat>) (zero <Nat>) ((cons <Nat>) (zero <Nat>) ((cons <Nat>) (zero <Nat>) ((cons <Nat>) (zero <Nat>) (nil <Nat>)))))
+
+
+def lencinco :: Nat
+def lencinco = (lenght <Nat>) listcinco

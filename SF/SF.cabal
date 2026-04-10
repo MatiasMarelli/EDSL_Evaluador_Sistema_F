@@ -29,6 +29,7 @@ library
       Eval
       File
       Parse
+      TypeCheck
   other-modules:
       Paths_SF
   autogen-modules:

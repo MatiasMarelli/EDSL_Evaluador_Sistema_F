@@ -4,7 +4,8 @@ import Common
 import Data.Map as M
 import Parse
 import Data.Maybe
-
+import TypeCheck (checkType)
+import File (compileFiles)
 
 
 test :: String
@@ -19,3 +20,10 @@ test = "(/\\X. /\\Y. \\x:X -> Y -> Y. \\b: X -> Y . x b) <List Nat>"
    
 main :: IO ()
 main = undefined
+
+
+
+ej :: IO (Either String LocalType)
+ej = do v <- compileFiles
+        let t = checkType v (FreeV "lencinco")
+        return t
