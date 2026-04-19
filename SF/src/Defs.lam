@@ -14,17 +14,23 @@ def zero = /\ X. \s: X->X. \z:X.z
 def suc :: Nat->Nat
 def suc = \n:Nat. /\X. \s:X -> X.\z:X. s((n <X>)s z)
 
-def lenght :: 4 X. List X -> Nat 
-def lenght = /\ X. \xs:List X. (xs <Nat>) (\x:X.\r:Nat.(suc r)) (zero <Nat>)
+def length :: 4 X. List X -> Nat 
+def length = /\ X. \xs:List X. (xs <Nat>) (\x:X.\r:Nat.(suc r)) (zero <Nat>)
 
 def udt :: List Nat
 def udt = (cons <Nat>) (suc (suc (suc (zero <Nat>)))) ((cons <Nat>) (suc (suc (zero <Nat>))) ((cons <Nat> )(suc (zero <Nat>)) (nil <Nat>)))
 
 def alenNat :: Nat
-def alenNat = (lenght <Nat>) udt
+def alenNat = (length <Nat>) udt
 
 def tres :: Nat
 def tres = suc(suc (suc (zero <Nat>)))
+
+def uno :: Nat
+def uno = suc (zero <Nat>)
+
+def z :: Nat
+def z = zero <Nat>
 
 def cinco :: Nat
 def cinco = suc(suc(suc(suc (suc (zero <Nat>)))))
@@ -34,7 +40,7 @@ def listcinco = (cons <Nat>) (suc(zero <Nat>)) ((cons <Nat>) (zero <Nat>) ((cons
 
 
 def lencinco :: Nat
-def lencinco = (lenght <Nat>) listcinco
+def lencinco = (length <Nat>) listcinco
 
 
 def Bool := 4 B. B -> B -> B
@@ -45,8 +51,14 @@ def true  = /\X. \t:X. \f:X . t
 def false :: Bool
 def false = /\X. \t:X. \f:X . f
 
-def if :: 4 X. X -> X
-def if = /\X. \id:X. id
+def if :: 4 X. Bool -> X -> X -> X 
+def if = /\X. \b:Bool . \e:X . \ee:X . (b <X>) e ee 
 
-def quiza :: Bool -> Int
-def quiza = \b:Bool. ((if <Bool>) b) (zero <Nat>) (suc (zero <Nat>))
+def lenat :: List Nat -> Nat
+def lenat = length <Nat>
+
+def consnat :: Nat -> List Nat -> Nat
+def consnat = \x:Nat. \y:List Nat .((cons <Nat>) x y) <Nat>
+
+def test :: Nat
+def test = (\b:Bool. ((if <Nat>) b) (suc (zero <Nat>)) (zero <Nat>)) false 

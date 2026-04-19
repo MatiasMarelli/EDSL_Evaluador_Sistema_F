@@ -44,7 +44,7 @@ Exp     :: { Term }
 
 NAbs    :: { Term }
 	: NAbs Atom   		     { EApp $1 $2 } 
-        | Atom '<' Poli '>'          { ETApp $1 $3 }
+        | NAbs '<' Poli '>'          { ETApp $1 $3 }
         | Atom                       { $1 }
 
 

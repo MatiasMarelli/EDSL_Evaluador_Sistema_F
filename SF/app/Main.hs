@@ -9,14 +9,16 @@ import File (compileFiles,unLeft)
 
 
 test :: String
-test = "(/\\X. /\\Y. \\x:X -> Y -> Y. \\b: X -> Y . x b) <List Nat>" 
+test = " /\\X . \\b:Bool .\\a:X. \\c:X. b <X> a c " 
     --"((/\\ X. \\x: X -> X . x) <Nat>) ((/\\Y./\\Z. \\y:Y -> Z -> Y. y y) <List> ) "
 
 
 -- List X = \/ R . (X -> R -> R) -> R -> R
 -- List = \/ X . \/R . (X -> R -> R) -> R -> R ||| <List Nat> = <List> <Nat> 
---e:: Either Error (Value,Env)
---e = runState (eval (convertion (fromJust (getResult (expPar test))))) M.empty 
+e:: IO (Either Error (Value,Env))
+e = do env <- compileFiles
+       let v = runState (eval (convertion (unLeft (getResult (expPar test))))) env
+       return v
    
 main :: IO ()
 main = undefined
@@ -25,5 +27,5 @@ main = undefined
 
 ej :: IO (Either String LocalType)
 ej = do v <- compileFiles
-        let t = checkType v  (App (convertion (unLeft ( getResult (expPar "\\b:Int. ((if <Bool>) b) (zero <Nat>) (suc (zero <Nat>))")))) (FreeV "true")) 
-        return t
+        let t = checkType v   (convertion (unLeft ( getResult (expPar "(/\\ X. \\xs: List X. (length <X>) xs ) <Nat> (nil <Nat>)")))) 
+        return t 

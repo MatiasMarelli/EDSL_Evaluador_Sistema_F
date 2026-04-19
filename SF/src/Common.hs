@@ -85,7 +85,13 @@ data LocalType = BoundT Int
                | FreeT String [LocalType]
                | Uni LocalType
                | Fun LocalType LocalType
-               deriving (Show,Eq)
+               deriving (Show)
+instance Eq LocalType where
+  BoundT i   == BoundT j    = if i == j then True else False
+  FreeT n xs == FreeT n' ys = if n == n' then xs == ys else False
+  Uni t      == Uni t'      = t == t'
+  Fun t1 t2  == Fun t1' t2' = t1==t1' && t2==t2'
+  _          == _           = False
 
 data Term    = EVar String
              | EAbs String Type Term 

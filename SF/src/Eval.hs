@@ -71,15 +71,15 @@ typeSub :: Int -> LocalType -> LocalType -> LocalType
 typeSub i t (BoundT j) | i == j    = t
                        | otherwise = BoundT j
 typeSub i t (FreeT n ts)           = FreeT n (L.map (typeSub i t) ts) 
-typeSub i t (Uni t')               = Uni (typeSub i t t')
+typeSub i t (Uni t')               = Uni (typeSub (i+1) t t')
 typeSub i t (Fun t1 t2)            = Fun (typeSub i t t1) (typeSub i t t2)
 ----------------------------------------------------------------------------------------------
 
 evalType :: [LocalType] -> State LocalType
 evalType [x] = case x of
                  (FreeT n ts)   -> do t   <- lookForType n  
-                                      return (evalType' 0 (convertionType t) ts )
-                 (BoundT i)  -> return x
+                                      return (evalType' (convertionType t) ts )
+                 (BoundT _)  -> return x
                  (Fun t1 t2) -> do t1' <- evalType [t1]
                                    t2' <- evalType [t2]
                                    return (Fun t1' t2')
@@ -89,18 +89,24 @@ evalType [x] = case x of
 evalType (x:xs) = case x of
                     (FreeT n ts)  -> do t  <- lookForType n
                                         t' <- evalType ((convertionType t):ts) 
-                                        return  (evalType' 0 t' xs)
+                                        return  (evalType' t' xs)
                     _          -> throwTypeApp (show x)
 
-evalType' :: Int -> LocalType -> [LocalType] -> LocalType
-evalType' _ t []      = t
-evalType' i t (t':ts) = evalType' (i+1) (typeSub i t' t) ts
+
+
+evalType' ::  LocalType -> [LocalType] -> LocalType
+evalType' t []      = t
+evalType' (Uni t) (t':ts) = let t'' = evalType' (typeSub 0 t' t) ts
+                            in (Uni t'')
+evalType' _ _       = undefined
+
+
 ----------------------------------------------------------
 
 instanceTerm :: Int -> LocalTerm -> LocalType -> State LocalTerm
 instanceTerm i (FreeV s) t   = do v <- lookForExp s
                                   instanceTerm i (quote v) t
-instanceTerm _ (Bound j) _   = return (Bound j)
+instanceTerm _ (Bound j) _   =    return (Bound j)                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
 instanceTerm i (App t1 t2) t = do t1' <- instanceTerm i t1 t
                                   t2' <- instanceTerm i t2 t 
                                   return (App t1' t2')
