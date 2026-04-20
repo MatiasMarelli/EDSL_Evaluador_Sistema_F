@@ -6,6 +6,7 @@ import Prelude
 import Control.Monad.IO.Class
 
 type Env = M.Map String (Either ExpEnv TypeEnv)
+type Error = String
 
 newtype State a = State {runState :: Env -> Either Error (a,Env)}
 
@@ -26,11 +27,16 @@ instance Applicative State where
 
 ------------------------------------------------------------------------------------------
 
+err :: String -> Either Error a
+err = Left
+
+typeVarNotFound :: String -> String
+typeVarNotFound n = "Variable " ++ n ++ " not found"
 
 lookForExp :: String ->State Value
 lookForExp n = State (\e -> case M.lookup n e of
-                            Nothing             -> Left ExpVarNotFound
-                            Just (Right _)      -> Left (BadExpDef ("Variable " ++ n ++ " was not an expresion")) 
+                            Nothing             -> err  (typeVarNotFound n)
+                            Just (Right _)      -> err  $"Variable " ++ n ++ " was not an expression"
                             Just (Left (v,_))   -> Right (v , e)
                      )
 
@@ -43,32 +49,32 @@ updateTypeEnv n t  = State (\e -> Right ((), M.insert n (Right t) e))
 
 lookForType :: String -> State Type
 lookForType n = State (\e -> case M.lookup n e of
-                             Nothing        -> Left (TypeVarNotFound n)
-                             Just (Left _)  -> Left BadTypeDef
+                             Nothing        -> err (typeVarNotFound n)
+                             Just (Left _)  -> err $ "Bad Type "++ n ++" definition"
                              Just (Right t) -> Right (t,e))
 
 getState :: State Env
 getState = State(\e -> Right(e,e) )
 
-throwApp :: String -> State Value
-throwApp s = State(\_ -> Left (InvalidApp s))
+throwApp :: String -> State a
+throwApp s = State(\_ -> err $ "Unknown expression: "++s)
 
-throwTypeDef :: State Type
-throwTypeDef = State(\_ -> Left BadTypeDef)
 
-throwTypeApp ::String -> State LocalType
-throwTypeApp s = State(\_ -> Left (InvalidTypeApp s))
+throwTypeApp ::String -> State a
+throwTypeApp s = State(\_ -> err $ "Invalid Type application, wasnt expecting :"++s)
 
 throwExpDef :: String -> State a
-throwExpDef s = State(\_ -> Left (BadExpDef s))
+throwExpDef s = State(\_ -> err $ "Error in the definition of: "++ s)
 
 throwPar :: String -> State a
-throwPar s = State(\_ -> Left (Par s))
+throwPar s = State(\_ -> err $ "Parse error : "++ s)
+
+throwCompile :: String -> State a 
+throwCompile s = State(\_ -> err $ "Compiling error, "++ s)
 ------------------------------------------------------------------------------------------
 
 
 
-data Error = ExpVarNotFound | TypeVarNotFound String | Par String | InvalidApp String| InvalidTypeApp String | BadExpDef String | BadTypeDef deriving (Show,Eq)
 
 
 data Defs = DefT Type [Type] Type

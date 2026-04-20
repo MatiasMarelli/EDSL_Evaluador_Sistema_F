@@ -47,9 +47,6 @@ convertionType' xs (VarT n ts)     = case look xs n of
                                        Nothing -> FreeT n (L.map (convertionType' xs) ts)
                                        Just i  -> BoundT i
 
-----------------------------------------------------------
-
-
 
 -----------------------------------------------------------------------------------------------
 
@@ -78,27 +75,26 @@ typeSub i t (Fun t1 t2)            = Fun (typeSub i t t1) (typeSub i t t2)
 evalType :: [LocalType] -> State LocalType
 evalType [x] = case x of
                  (FreeT n ts)   -> do t   <- lookForType n  
-                                      return (evalType' (convertionType t) ts )
+                                      evalType' (convertionType t) ts 
                  (BoundT _)  -> return x
                  (Fun t1 t2) -> do t1' <- evalType [t1]
                                    t2' <- evalType [t2]
                                    return (Fun t1' t2')
                  (Uni t)     -> do t' <- evalType [t]
                                    return (Uni t')
-                 --_           -> throwTypeApp ("In Function evalType: "++show x)
 evalType (x:xs) = case x of
                     (FreeT n ts)  -> do t  <- lookForType n
                                         t' <- evalType ((convertionType t):ts) 
-                                        return  (evalType' t' xs)
-                    _          -> throwTypeApp (show x)
+                                        evalType' t' xs
+                    _          -> throwTypeApp $ (show x) ++ ". Expecting a type with a" ++ show (FreeT "..." []) ++" form"
 
 
 
-evalType' ::  LocalType -> [LocalType] -> LocalType
-evalType' t []      = t
-evalType' (Uni t) (t':ts) = let t'' = evalType' (typeSub 0 t' t) ts
-                            in (Uni t'')
-evalType' _ _       = undefined
+evalType' ::  LocalType -> [LocalType] -> State LocalType
+evalType' t []      = return t
+evalType' (Uni t) (t':ts) = do t'' <- evalType' (typeSub 0 t' t) ts
+                               return (Uni t'')
+evalType' t _             = throwTypeApp $ (show t) ++ ".Expecting a "++ show(Uni t)
 
 
 ----------------------------------------------------------
