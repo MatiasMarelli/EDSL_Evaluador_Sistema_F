@@ -3,7 +3,7 @@ def Nat := 4 N . ((N -> N) -> N -> N)
 def List X := 4 R . ((X -> R -> R) -> R -> R)
 
 def nil :: 4 X.List X
-def nil = /\ X./\R. \c: X -> Y -> Y. \n:Y. n
+def nil = /\ X./\Y. \c: X -> Y -> Y. \n:Y. n
 
 def cons :: 4 X. X -> List X -> List X
 def cons = /\X . \x:X. \xs: List X. /\Y. \c:X -> Y -> Y. \n:Y. c x ((xs <Y>) c n)
@@ -37,12 +37,7 @@ def cinco = suc(suc(suc(suc (suc (zero <Nat>)))))
 
 def listcinco :: List Nat
 def listcinco = (cons <Nat>) (suc(zero <Nat>)) ((cons <Nat>) (zero <Nat>) ((cons <Nat>) (zero <Nat>) ((cons <Nat>) (zero <Nat>) ((cons <Nat>) (zero <Nat>) (nil <Nat>)))))
-
-
-def lencinco :: Nat
-def lencinco = (length <Nat>) listcinco
-
-
+|
 def Bool := 4 B. B -> B -> B
 
 def true  :: Bool
@@ -53,12 +48,3 @@ def false = /\X. \t:X. \f:X . f
 
 def if :: 4 X. Bool -> X -> X -> X 
 def if = /\X. \b:Bool . \e:X . \ee:X . (b <X>) e ee 
-
-def lenat :: List Nat -> Nat
-def lenat = length <Nat>
-
-def consnat :: Nat -> List Nat -> Nat
-def consnat = \x:Nat. \y:List Nat .((cons <Nat>) x y) <Nat>
-
-def test :: Nat
-def test = (\b:Bool. ((if <Nat>) b) (suc (zero <Nat>)) (zero <Nat>)) false 

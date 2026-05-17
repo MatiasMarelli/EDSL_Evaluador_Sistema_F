@@ -27,5 +27,5 @@ main = undefined
 
 ej :: IO (Either String LocalType)
 ej = do v <- compileFiles
-        let t = checkType v   (convertion (unLeft ( getResult (expPar "(/\\ X. \\xs: List X. (length <X>) xs ) <Nat> (nil <Nat>)")))) 
+        let t = checkType v   (convertion (unLeft ( getResult (expPar "/\\X.\\x:X.x")))) 
         return t 

@@ -68,7 +68,9 @@ typeSub :: Int -> LocalType -> LocalType -> LocalType
 typeSub i t (BoundT j) | i == j    = t
                        | otherwise = BoundT j
 typeSub i t (FreeT n ts)           = FreeT n (L.map (typeSub i t) ts) 
-typeSub i t (Uni t')               = Uni (typeSub (i+1) t t')
+typeSub i t (Uni t')               = case t of 
+                                       BoundT j -> Uni (typeSub (i+1) (BoundT (j+1)) t')
+                                       _        -> Uni (typeSub (i+1) t t')
 typeSub i t (Fun t1 t2)            = Fun (typeSub i t t1) (typeSub i t t2)
 ----------------------------------------------------------------------------------------------
 
@@ -93,7 +95,7 @@ evalType (x:xs) = case x of
 evalType' ::  LocalType -> [LocalType] -> State LocalType
 evalType' t []      = return t
 evalType' (Uni t) (t':ts) = do t'' <- evalType' (typeSub 0 t' t) ts
-                               return (Uni t'')
+                               return t''
 evalType' t _             = throwTypeApp $ (show t) ++ ".Expecting a "++ show(Uni t)
 
 
