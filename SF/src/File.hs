@@ -1,9 +1,9 @@
 module File where
-
+import Prelude hiding ((>>=))
 import Common hiding (err)
 import System.IO
 import Parse
-import TypeCheck (TypeChecker,checkType,appType)
+import TypeCheck (convertionT,type2CheckType,infer,TypeChecker,CheckerTerm,CheckerType,err,(>>=),isConstructor)
 import Eval
 import Data.Maybe
 import Data.Map as M
@@ -13,17 +13,12 @@ prelude :: String
 prelude = "src/Defs.lam"
 
 
-assertType :: Type -> Term -> Env -> TypeChecker LocalType
-assertType t e s = let t'      = convertionType t 
-                       expType = (checkType s (convertion e))
-                   in case expType of
-                        Left err     -> Left $ err ++ " in " ++ show (convertion e)
-                        Right t'' -> if t' == t'' then Right t'' 
-                                                    else case appType s [t'] of
-                                                           Left x    -> Left x 
-                                                           Right t''' -> if t''' == t'' then Right t''
-                                                                                        else Left $ "No matching type. Expecting a " ++ show(t''') ++ " but receive a " ++ show(t'') ++ " in  " ++ show (t') ++ " and in " ++ show(t'')
-
+assertType :: Type -> Term -> Env -> TypeChecker CheckerType
+assertType t' l' e = let (t,l) = (type2CheckType t',convertionT l')
+                     in infer e l >>= \t'' -> if t'' == t then (Right t)
+                                                          else  isConstructor e t >>= \v -> 
+                                                            if v == t'' then (Right t) 
+                                                                        else err $ show(t) ++ "   HOLAAA    " ++ show(t'')
 
 
 convertDefT :: Defs -> Type

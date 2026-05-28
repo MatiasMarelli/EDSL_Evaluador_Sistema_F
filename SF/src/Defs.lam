@@ -1,50 +1,65 @@
-
 def Nat := 4 N . ((N -> N) -> N -> N)
 def List X := 4 R . ((X -> R -> R) -> R -> R)
 
 def nil :: 4 X.List X
-def nil = /\ X./\Y. \c: X -> Y -> Y. \n:Y. n
+def nil = /\ X./\R. \c: X -> R -> R. \n:R. n
 
 def cons :: 4 X. X -> List X -> List X
-def cons = /\X . \x:X. \xs: List X. /\Y. \c:X -> Y -> Y. \n:Y. c x ((xs <Y>) c n)
+def cons = /\X . \x:X. \xs: List X. /\R. \c:X -> R -> R. \n:R. c x ((xs <R>) c n)
 
 def zero :: Nat
-def zero = /\ X. \s: X->X. \z:X.z
+def zero = /\ N. \s: N->N. \z:N.z
 
 def suc :: Nat->Nat
-def suc = \n:Nat. /\X. \s:X -> X.\z:X. s((n <X>)s z)
+def suc = \n:Nat. /\N. \s:N -> N.\z:N. s((n <N>)s z)
 
 def length :: 4 X. List X -> Nat 
-def length = /\ X. \xs:List X. (xs <Nat>) (\x:X.\r:Nat.(suc r)) (zero <Nat>)
+def length = /\ X. \xs:List X. (xs <Nat>) (\x:X.\r:Nat.(suc r)) (zero)
 
 def udt :: List Nat
-def udt = (cons <Nat>) (suc (suc (suc (zero <Nat>)))) ((cons <Nat>) (suc (suc (zero <Nat>))) ((cons <Nat> )(suc (zero <Nat>)) (nil <Nat>)))
+def udt = (cons <Nat>) (suc (suc (suc (zero )))) ((cons <Nat>) (suc (suc (zero))) ((cons <Nat> )(suc (zero)) (nil <Nat>)))
 
 def alenNat :: Nat
 def alenNat = (length <Nat>) udt
 
 def tres :: Nat
-def tres = suc(suc (suc (zero <Nat>)))
+def tres = suc(suc (suc (zero)))
 
 def uno :: Nat
-def uno = suc (zero <Nat>)
+def uno = suc (zero)
 
-def z :: Nat
-def z = zero <Nat>
 
 def cinco :: Nat
-def cinco = suc(suc(suc(suc (suc (zero <Nat>)))))
+def cinco = suc(suc(suc(suc (suc (zero)))))
 
 def listcinco :: List Nat
-def listcinco = (cons <Nat>) (suc(zero <Nat>)) ((cons <Nat>) (zero <Nat>) ((cons <Nat>) (zero <Nat>) ((cons <Nat>) (zero <Nat>) ((cons <Nat>) (zero <Nat>) (nil <Nat>)))))
-|
+def listcinco = (cons <Nat>) (suc(zero)) ((cons <Nat>) (zero ) ((cons <Nat>) (zero ) ((cons <Nat>) (zero) ((cons <Nat>) (zero ) (nil <Nat>)))))
+
 def Bool := 4 B. B -> B -> B
 
 def true  :: Bool
-def true  = /\X. \t:X. \f:X . t
+def true  = /\B. \t:B. \f:B . t
 
 def false :: Bool
-def false = /\X. \t:X. \f:X . f
+def false = /\B. \t:B. \f:B . f
 
 def if :: 4 X. Bool -> X -> X -> X 
 def if = /\X. \b:Bool . \e:X . \ee:X . (b <X>) e ee 
+
+def toto :: 4 X. List List X -> List Nat 
+def toto = /\ X. \xs: List List X. xs <List Nat> (\x:List X. \rs:List Nat. (cons <Nat>) (length <X>  x) rs) (nil <Nat>)
+
+
+def Pair (X) Y := 4 P. (X -> Y -> P) -> P 
+
+def pair :: 4 X. 4 Y. X -> Y -> Pair (X) Y 
+def pair = /\ X. /\ Y. \x:X.\y:Y. /\P. \p: X->Y->P. (p x y) 
+
+def fst :: 4 X. 4 Y. Pair (X) Y -> X 
+def fst = /\X. /\Y. \p: Pair (X) Y. p<X> (\a:X.\b:Y. a)
+
+def snd :: 4 X. 4 Y. Pair (X) Y -> Y
+def snd = /\X. /\Y. \p: Pair (X) Y. p<Y> (\xx:X.\yy:Y.yy)
+
+def tototo :: 4 X. 4 Y. List (Pair (X) Y) -> Pair (List X) (List Y)
+def tototo = /\X. /\Y. \xs:List (Pair (X) Y). xs <Pair (List X) (List Y)> (\x:Pair (X) Y. \ps:Pair (List X) (List Y). (pair <List X>) <List Y> (cons <X> ((fst <X>) <Y> x) ((fst <List X>) <List Y> ps)) (cons <Y> ((snd <X>) <Y> x) ((snd <List X>) <List Y> ps))) ((pair <List X>) <List Y> (nil <X>) (nil <Y>))

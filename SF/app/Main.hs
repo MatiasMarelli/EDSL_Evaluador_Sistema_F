@@ -4,7 +4,7 @@ import Common
 import Data.Map as M
 import Parse
 import Data.Maybe
-import TypeCheck (checkType)
+import TypeCheck hiding (return)
 import File (compileFiles,unLeft)
 
 
@@ -23,9 +23,7 @@ e = do env <- compileFiles
 main :: IO ()
 main = undefined
 
-
-
-ej :: IO (Either String LocalType)
-ej = do v <- compileFiles
-        let t = checkType v   (convertion (unLeft ( getResult (expPar "/\\X.\\x:X.x")))) 
+ej :: IO (TypeChecker CheckerType)
+ej = do v <- compileFiles 
+        let t = infer v (convertionT(unLeft (getResult (expPar "tototo"))))
         return t 
