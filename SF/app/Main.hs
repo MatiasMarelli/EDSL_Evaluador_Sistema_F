@@ -4,21 +4,26 @@ import Common
 import Data.Map as M
 import Parse
 import Data.Maybe
+import PrettyPrinter
 import TypeCheck hiding (return)
 import File (compileFiles,unLeft)
 
 
 test :: String
-test = " /\\X . \\b:Bool .\\a:X. \\c:X. b <X> a c " 
+test = " toto " 
     --"((/\\ X. \\x: X -> X . x) <Nat>) ((/\\Y./\\Z. \\y:Y -> Z -> Y. y y) <List> ) "
 
 
 -- List X = \/ R . (X -> R -> R) -> R -> R
 -- List = \/ X . \/R . (X -> R -> R) -> R -> R ||| <List Nat> = <List> <Nat> 
-e:: IO (Either Error (Value,Env))
+e:: IO ()
 e = do env <- compileFiles
-       let v = runState (eval (convertion (unLeft (getResult (expPar test))))) env
-       return v
+       let v  = runState (eval (convertion (unLeft (getResult (expPar test))))) env
+       case v of 
+        Left e -> return ()
+        Right (t,_) -> do let v' = printTerm(quote(t))
+                          putStrLn $ show (v')
+                          return ()
    
 main :: IO ()
 main = undefined

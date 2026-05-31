@@ -29,6 +29,7 @@ library
       Eval
       File
       Parse
+      PrettyPrinter
       TypeCheck
   other-modules:
       Paths_SF
@@ -39,10 +40,13 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-tool-depends:
       happy:happy
+    , prettyprinter:prettyprinter
   build-depends:
       array
     , base >=4.7 && <5
     , containers
+    , pretty
+    , prettyprinter
   default-language: Haskell2010
 
 executable SF-exe
@@ -56,11 +60,14 @@ executable SF-exe
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-tool-depends:
       happy:happy
+    , prettyprinter:prettyprinter
   build-depends:
       SF
     , array
     , base >=4.7 && <5
     , containers
+    , pretty
+    , prettyprinter
   default-language: Haskell2010
 
 test-suite SF-test
@@ -75,9 +82,12 @@ test-suite SF-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-tool-depends:
       happy:happy
+    , prettyprinter:prettyprinter
   build-depends:
       SF
     , array
     , base >=4.7 && <5
     , containers
+    , pretty
+    , prettyprinter
   default-language: Haskell2010
