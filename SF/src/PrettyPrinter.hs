@@ -54,7 +54,7 @@ pp iv it fv ft (LamT l) =
 pp iv it fv ft (AppT l xs) =
   pp iv it fv ft l 
   <> text " <"
-  <> hcat (foldr (:) [] (map (printType it ft) xs))
+  <> sep (foldr (:) [] (map (printType it ft) xs))
   <> text ">"
 
 isLam :: LocalTerm -> Bool
@@ -76,7 +76,7 @@ isUni _         = False
 
 printType :: Int -> [String] -> LocalType -> Doc
 printType it ft (BoundT k)   = text (ft !! (it-k-1))
-printType it ft (FreeT n xs) = text n <> hcat (map (printType it ft) xs)
+printType it ft (FreeT n xs) = text n <>  if (null xs) then sep (map (printType it ft) xs) else parens (sep (map (printType it ft) xs))
 
 printType it ft (Uni t) =
   text "\\/"

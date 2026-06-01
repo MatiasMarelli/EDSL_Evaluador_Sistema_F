@@ -10,7 +10,7 @@ import File (compileFiles,unLeft)
 
 
 test :: String
-test = " toto " 
+test = " tototo " 
     --"((/\\ X. \\x: X -> X . x) <Nat>) ((/\\Y./\\Z. \\y:Y -> Z -> Y. y y) <List> ) "
 
 
