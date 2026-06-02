@@ -3,11 +3,14 @@ import Common
 import Data.Map    as M
 import Data.List   as L
 
+----------------------------------------------------------
 
+-- Convierte terminos en Terminos Locales
 convertion :: Term -> LocalTerm
 
 convertion = convertionExp' [] []
-----------------------------------------------------------
+
+
 convertionExp' :: [String] -> [String] -> Term -> LocalTerm
 
 convertionExp' xs ts (EAbs n t l) = Lam (convertionType' ts t) (convertionExp' (n:xs) ts l)
@@ -26,7 +29,7 @@ convertionExp' xs ts (EVar n)     = case look xs n of
 
 -- hola te amoooo :D (el colo)
 ----------------------------------------------------------
-
+--Busca el bindeo con su variable local
 look :: [String] -> String -> Maybe Int
 look = findBound 0 
 
@@ -36,6 +39,7 @@ findBound i (x:xs) n = if x == n then Just i
                        else findBound (i+1) xs n
 
 -----------------------------------------------------------
+--Convierte Tipos en Tipos Locales
 
 convertionType :: Type -> LocalType
 convertionType = convertionType' []
@@ -49,6 +53,7 @@ convertionType' xs (VarT n ts)     = case look xs n of
 
 
 -----------------------------------------------------------------------------------------------
+--Hace la sustitucion luego de un App
 
 expSub :: Int -> LocalTerm -> LocalTerm -> LocalTerm 
 expSub i t (Bound j)  | i == j    = t
@@ -59,11 +64,13 @@ expSub i t (Lam t' u)             = Lam t' (expSub (i+1) t u)
 expSub i t (LamT u)               = LamT (expSub i t u)
 expSub i t (AppT u t')            = AppT (expSub i t u) t'
 
-
+--Convierte un Value en un Termino Local
 quote :: Value -> LocalTerm
 quote (VLam t l)  = Lam  t l
 quote (VType l)   = LamT l  
 
+
+--Hace la sustitucion de los tipos 
 typeSub :: Int -> LocalType -> LocalType -> LocalType
 typeSub i t (BoundT j) | i == j    = t
                        | otherwise = BoundT j
@@ -73,7 +80,7 @@ typeSub i t (Uni t')               = case t of
                                        _        -> Uni (typeSub (i+1) t t')
 typeSub i t (Fun t1 t2)            = Fun (typeSub i t t1) (typeSub i t t2)
 ----------------------------------------------------------------------------------------------
-
+--Reduce los tipos "compuestos" (Ej. List Nat)
 evalType :: [LocalType] -> State LocalType
 evalType [x] = case x of
                  (FreeT n ts)   -> do t   <- lookForType n  
@@ -100,7 +107,7 @@ evalType' t _             = throwTypeApp $ (show t) ++ ".Expecting a "++ show(Un
 
 
 ----------------------------------------------------------
-
+--Remplaza los tipos instanciados dentro de los Terminos Locales
 instanceTerm :: Int -> LocalTerm -> LocalType -> State LocalTerm
 instanceTerm i (FreeV s) t   = do v <- lookForExp s
                                   instanceTerm i (quote v) t
@@ -119,6 +126,8 @@ instanceTerm i (AppT e ts) t = do t1 <- instanceTerm i e t
 
 
 ---------------------------------------------------------------------------------
+-- Funcion Evaluadora, reduce un Termino Local a un Value
+-- Utiliza Monada State (Common.hs) 
 eval :: LocalTerm -> State Value
 
 eval (FreeV s)   = do v <- lookForExp s

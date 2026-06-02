@@ -85,7 +85,7 @@ printType it ft (Uni t) =
   <> printType (it +1) ft t
 
 printType it ft (Fun t t') = 
-  sep [parensIf (isFun t || isUni t) (printType it ft t), text "->", printType it ft t']
+  hsep [parensIf (isFun t || isUni t) (printType it ft t), text "->", printType it ft t']
 
 freeTerms :: LocalTerm -> [String]
 freeTerms (Bound _ )  = []

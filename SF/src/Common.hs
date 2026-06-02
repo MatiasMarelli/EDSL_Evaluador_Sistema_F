@@ -5,6 +5,10 @@ import Data.Maybe
 import Prelude
 import Control.Monad.IO.Class
 
+
+--------------------------------------------------------------------------------------------
+--DEFINICION DE LA MONADA
+
 type Env = M.Map String (Either ExpEnv TypeEnv)
 type Error = String
 
@@ -27,11 +31,12 @@ instance Applicative State where
 
 ------------------------------------------------------------------------------------------
 
+--FUNCIONES DE LA MONADA
+
 err :: String -> Either Error a
 err = Left
 
-typeVarNotFound :: String -> String
-typeVarNotFound n = "Variable " ++ n ++ " not found"
+--Busca en el State una variable de Expresion 
 
 lookForExp :: String ->State Value
 lookForExp n = State (\e -> case M.lookup n e of
@@ -40,12 +45,17 @@ lookForExp n = State (\e -> case M.lookup n e of
                             Just (Left (v,_))   -> Right (v , e)
                      )
 
+--Actualiza la lista de variables de termino
+
 updateExpEnv :: String -> Value -> Type -> State ()
 updateExpEnv n v t = State(\e -> Right ((),M.insert n (Left (v,t)) e))
+
+--Actualiza la lista de variables de tipos
 
 updateTypeEnv :: String -> Type -> State ()
 updateTypeEnv n t  = State (\e -> Right ((), M.insert n (Right t) e)) 
 
+--Busca en el State una Variable de tipo
 
 lookForType :: String -> State Type
 lookForType n = State (\e -> case M.lookup n e of
@@ -53,12 +63,17 @@ lookForType n = State (\e -> case M.lookup n e of
                              Just (Left _)  -> err $ "Bad Type "++ n ++" definition"
                              Just (Right t) -> Right (t,e))
 
+--Retorna el State interno de la monada
 getState :: State Env
 getState = State(\e -> Right(e,e) )
+
+--Funciones de Errores 
 
 throwApp :: String -> State a
 throwApp s = State(\_ -> err $ "Unknown expression: "++s)
 
+typeVarNotFound :: String -> String
+typeVarNotFound n = "Variable " ++ n ++ " not found"
 
 throwTypeApp ::String -> State a
 throwTypeApp s = State(\_ -> err $ "Invalid Type application, wasnt expecting :"++s)
@@ -73,7 +88,7 @@ throwCompile :: String -> State a
 throwCompile s = State(\_ -> err $ "Compiling error, "++ s)
 ------------------------------------------------------------------------------------------
 
-
+--ASTs
 
 
 
