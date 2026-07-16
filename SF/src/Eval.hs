@@ -1,5 +1,7 @@
 module Eval where
 import Common 
+import PrettyPrinter
+import Text.PrettyPrint.HughesPJ ( render)
 import Data.Map    as M
 import Data.List   as L
 
@@ -95,7 +97,7 @@ evalType (x:xs) = case x of
                     (FreeT n ts)  -> do t  <- lookForType n
                                         t' <- evalType ((convertionType t):ts) 
                                         evalType' t' xs
-                    _          -> throwTypeApp $ (show x) ++ ". Expecting a type with a" ++ show (FreeT "..." []) ++" form"
+                    _          -> throwTypeApp $  ((render.printType) x) ++ ". Expecting a type with a" ++ show (FreeT "..." []) ++" form"
 
 
 
@@ -103,7 +105,7 @@ evalType' ::  LocalType -> [LocalType] -> State LocalType
 evalType' t []      = return t
 evalType' (Uni t) (t':ts) = do t'' <- evalType' (typeSub 0 t' t) ts
                                return t''
-evalType' t _             = throwTypeApp $ (show t) ++ ".Expecting a "++ show(Uni t)
+evalType' t _             = throwTypeApp $ ((render.printType) t) ++ ".Expecting a "++ (render.printType)(Uni t)
 
 
 ----------------------------------------------------------
@@ -137,7 +139,7 @@ eval (App t1 t2) = do v  <- eval t1
                       v' <- eval t2
                       case quote v of
                         (Lam _ t1') -> eval (expSub 0 (quote v') t1')
-                        e           -> throwApp (show e)
+                        e           -> throwApp $ (render.printTerm) e
 
 eval (Lam  t l)  = return (VLam t l)
 eval (LamT l)  = return (VType l)
@@ -147,7 +149,7 @@ eval (AppT l t)  = do v  <- eval l
                       case v of 
                         (VType e) -> do e' <- instanceTerm 0 e t'
                                         eval e'
-                        _         -> throwApp (show v)
+                        _         -> throwApp $ (render.printTerm.quote) v
                                                   
 
-eval e           = throwApp (show e)
+eval e           = throwApp $ (render.printTerm) e

@@ -67,6 +67,10 @@ lookForType n = State (\e -> case M.lookup n e of
 getState :: State Env
 getState = State(\e -> Right(e,e) )
 
+--Setea un State dentro de la monada
+setState :: Env -> State ()
+setState e = State(\_ -> Right ((),e))
+
 --Funciones de Errores 
 
 throwApp :: String -> State a

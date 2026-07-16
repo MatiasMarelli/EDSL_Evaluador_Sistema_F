@@ -25,6 +25,8 @@ dependencies:
 - containers
 - prettyprinter
 - pretty
+- haskeline >= 0.8.2.1
+- transformers
 build-tools:
 - happy
 - prettyprinter

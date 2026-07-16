@@ -45,8 +45,10 @@ library
       array
     , base >=4.7 && <5
     , containers
+    , haskeline >=0.8.2.1
     , pretty
     , prettyprinter
+    , transformers
   default-language: Haskell2010
 
 executable SF-exe
@@ -66,8 +68,10 @@ executable SF-exe
     , array
     , base >=4.7 && <5
     , containers
+    , haskeline >=0.8.2.1
     , pretty
     , prettyprinter
+    , transformers
   default-language: Haskell2010
 
 test-suite SF-test
@@ -88,6 +92,8 @@ test-suite SF-test
     , array
     , base >=4.7 && <5
     , containers
+    , haskeline >=0.8.2.1
     , pretty
     , prettyprinter
+    , transformers
   default-language: Haskell2010

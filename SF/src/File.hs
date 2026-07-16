@@ -1,16 +1,14 @@
-module File where
+module File (compileFile) where
 import Prelude hiding ((>>=))
 import Common hiding (err)
 import System.IO
 import Parse
-import TypeCheck (convertionT,type2CheckType,infer,TypeChecker,CheckerTerm,CheckerType,err,(>>=),isConstructor)
+import TypeCheck (convertionT,type2CheckType,infer,TypeChecker,CheckerTerm,CheckerType,err,(>>=),isConstructor,showtype)
 import Eval
 import Data.Maybe
 import Data.Map as M
 import Control.Monad.IO.Class
-
-prelude :: String
-prelude = "src/Defs.lam"
+import PrettyPrinter 
 
 -- Funcion que checkea que el Tipo escrito coincida con lo que se infiere de su definicion.
 assertType :: Type -> Term -> Env -> TypeChecker CheckerType
@@ -18,7 +16,7 @@ assertType t' l' e = let (t,l) = (type2CheckType t',convertionT l')
                      in infer e l >>= \t'' -> if t'' == t then (Right t)
                                                           else  isConstructor e t >>= \v ->  -- Caso donde la definicion sea un constructor 
                                                             if v == t'' then (Right t)       -- En estos casos el tipo construido se hace por "comprension"
-                                                                        else err $ show(t) ++ "   HOLAAA    " ++ show(t'')
+                                                                        else err $ showtype t ++ "is diferent than infered :"  ++ showtype t''
 
 -- Conversion para que se transforme la definicion de tipo a una forma que la maquina entienda
 -- sin modificar como nosotros lo solemos hacer en papel
@@ -29,18 +27,6 @@ convertDefT':: [Type] -> Type -> Type
 convertDefT' [] t     = t
 convertDefT' ((VarT n []): ts) t = UniT n (convertDefT' ts t) 
 
--- Funcion que compila un archivo de definiciones.
-compileFiles :: IO Env
-compileFiles = do s <- liftIO (readFile prelude)
-                  let xs = Prelude.map (getResult . defPar) (lines s)
-                  case checkParse xs of 
-                    Nothing -> (let e = runState (parseFile (Prelude.map unLeft xs)) M.empty in
-                                case e of
-                                  Left err       -> (do putStrLn (show err)
-                                                        return M.empty)
-                                  Right (v,s) -> return v)
-                    Just e'  -> do putStrLn e'
-                                   return M.empty
                   
 --Funcion que verifica que el parser no tuvo problemas en todo el archivo
 checkParse :: [Either [Defs] String] -> Maybe String
@@ -78,9 +64,27 @@ aux (x:y:xs) = case x of
                  (TypeExp n t)        -> case y of
                                           (Def n' e) -> (if n == n' then do s <- getState
                                                                             case assertType t e s of 
-                                                                              Left err -> throwCompile $ "not matching types, "++ err ++ " checking "++ show (n)
+                                                                              Left err -> throwCompile $ err ++ " in definition: "++ show (n)
                                                                               Right _  -> do v <- eval (convertion e)
                                                                                              updateExpEnv n v t
                                                                                              aux xs
                                                                     else throwCompile $ " Expecting a definition for: "++ n ++ " but receive one for "++ n' )
 
+                                                                    
+-- Modifica el nombre de un archivo para ponerlo en el path correspondiente
+fileName :: String -> String
+fileName n = "Files/" ++ n ++".lam"
+
+
+-- Funcion que compila un archivo de definiciones y devuelve el estado resultante.
+compileFile :: String -> IO Env
+compileFile n = do s <- liftIO (readFile (fileName n))
+                   let xs = Prelude.map (getResult . defPar) (lines s)
+                   case checkParse xs of 
+                     Nothing -> (let e = runState (parseFile (Prelude.map unLeft xs)) M.empty in
+                                 case e of
+                                   Left err       -> (do putStrLn (show err)
+                                                         return M.empty)
+                                   Right (v,s) -> return v)
+                     Just e'  -> do putStrLn e'
+                                    return M.empty

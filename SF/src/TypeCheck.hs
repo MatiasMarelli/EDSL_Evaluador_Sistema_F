@@ -3,7 +3,9 @@ import Common hiding (err)
 import Prelude hiding (return,(>>=))
 import Data.Map as M  (lookup)
 import Data.List as L (map,elem)
-import Eval (evalType, convertionType,typeSub)
+import Eval (evalType, convertionType,convertion,typeSub)
+import PrettyPrinter 
+import Text.PrettyPrint.HughesPJ (render)
 
 --Un AST donde no se pierde referencia de nombres de Bindeos
 
@@ -19,9 +21,6 @@ data CheckerTerm = CVar String
                  | CTApp CheckerTerm [CheckerType]
                  deriving (Show,Eq)
 
-
-listType :: Type
-listType = UniT "X" (UniT "R" (FunT (FunT (VarT "X" []) (FunT (VarT "R" []) (VarT "R" []))) (FunT (VarT "R" []) (VarT "R" []))))
 
 
 ----------------------------------------------------------------------------------
@@ -88,7 +87,7 @@ instanceType _ _                = err $ "Expecting a forall for instance"
 subType :: CheckerTerm -> [CheckerType] -> TypeChecker CheckerTerm
 subType l []                        = return l
 subType (CTAbs (CBound n) l) (t:ts) = subType' n t l >>= \t' -> subType t' ts
-subType l _                         = err $ "Bad Instantiation, more Types than Universal in: "++ show(l)
+subType l _                         = err $ "Bad Instantiation, more Types than Universal in: "++ showterm l
 
 --Recorremos el Term para sustituir
 subType' :: String -> CheckerType -> CheckerTerm -> TypeChecker CheckerTerm
@@ -110,13 +109,19 @@ subType'' n t (CUni n' t') | n' == n   = return $ CUni n' t'
                            | otherwise = subType'' n t t' >>= \t'' -> return $ CUni n' t'' 
 subType'' n t (CFun t1 t2 )            = subType'' n t t1 >>= \t1' -> subType'' n t t2 >>= \t2' -> return $ CFun t1' t2'
 
+showtype :: CheckerType -> String
+showtype = render.printType. convertionType. checkerType2Type 
+showterm :: CheckerTerm -> String
+showterm = render. printTerm. convertion. checkerTerm2Term
 
 -- Funcion que infiere el tipo de un Term para
 -- Verificar que este bien tipado
 -- Y comprobar que los tipos matcheen con lo dado por su definicion
+-- Se tiene un Env con definiciones previas para variables Libres
 infer :: Env -> CheckerTerm -> TypeChecker CheckerType
 infer e l = infer' e [] l 
 
+-- Lleva una lista de contexto con las variables ligadas y su tipo
 infer':: Env -> [(String,CheckerType)] -> CheckerTerm -> TypeChecker CheckerType
 infer' e c (CVar n)     = case lookContext n c of 
                           Just t  -> return t
@@ -129,23 +134,23 @@ infer' e c a@(CApp l1 l2) = infer' e c l1 >>= (\t1 ->
                            case t1 of 
                              CFun t1' t1'' -> if t1' == t2 
                                               then return t1''
-                                              else err $ "Expected a " ++ show(t1') ++ " but receive a "++show(t2) ++ " in " ++ show(l1) ++ "            " ++ show(l2)
-                             _             -> err $ "Expected a Function but receive: " ++ show(t1) ++ " in " ++ show(l1)))
+                                              else err $ "Expected a " ++ showtype t1' ++ " but receive a "++showtype t2 ++ " in " ++ showterm l1 
+                             _             -> err $ "Expected a Function but receive: " ++ showtype t1 ++ " in " ++ showterm l1))
 infer' e c (CTAbs t l)  = case t of 
                           (CBound n)  -> infer' e c l >>= \t' -> return $ CUni n t'
-                          _           -> err $ "Not expected a: "++ show(t) ++ " next to TypeAbstraction"
+                          _           -> err $ "Not expected a: "++ showtype t ++ " next to TypeAbstraction"
 infer' e c (CTApp l ts) =  infer' e c l >>= \t' -> case t' of 
                                                      CDef n xs -> case M.lookup n e of 
                                                                     Just(Right t) -> instanceType (type2CheckType t) (xs ++ ts)
                                                                     _             -> err $"Variable "++ (show n ) ++ " not defined"
                                                      CUni n t  -> instanceType t' ts
-                                                     _         -> err $ "Bad instantiation didnt expect "++ show(t')                     
+                                                     _         -> err $ "Bad instantiation didnt expect "++ showtype t'                     
 
 
 
 -- Caso borde donde la funcion definida es un constructor de tipo o elemento base del mismo
 -- Ya que estos se definen por compresnion
--- Ver como ejemplos en Defs.lam
+-- Ver como ejemplos en Defs.lam (nil , cons, zero, suc, etc)
 isConstructor :: Env -> CheckerType -> TypeChecker CheckerType
 isConstructor e (CFun t' t) = isConstructor e t >>= \t'' -> return $ CFun t' t'' 
 isConstructor e (CDef n xs) = case M.lookup n e of 
@@ -153,3 +158,19 @@ isConstructor e (CDef n xs) = case M.lookup n e of
                                 _             -> err $"Variable "++ (show n ) ++ " not defined"
 isConstructor e (CUni n t)  = isConstructor e t >>= \t' -> return (CUni n t')
 isConstructor _ t           = return t
+
+
+-- Funcion auxiliar para reconstruir el tipo original
+-- Se usa para poder luego de inferir poder mostrar el resultado
+checkerType2Type :: CheckerType -> Type 
+checkerType2Type (CDef n xs)   = VarT n (L.map checkerType2Type xs)
+checkerType2Type (CBound n)    = VarT n []
+checkerType2Type (CUni n t)    = UniT n (checkerType2Type t)
+checkerType2Type (CFun t1 t2 ) = FunT (checkerType2Type t1) (checkerType2Type t2) 
+
+checkerTerm2Term :: CheckerTerm -> Term
+checkerTerm2Term (CVar n)     = EVar n
+checkerTerm2Term (CAbs n t l) = EAbs n (checkerType2Type t) (checkerTerm2Term l)
+checkerTerm2Term (CApp l1 l2) = EApp (checkerTerm2Term l1) (checkerTerm2Term l2)
+checkerTerm2Term (CTAbs t l)  = ETAbs (checkerType2Type t) (checkerTerm2Term l)
+checkerTerm2Term (CTApp l ts) = ETApp (checkerTerm2Term l) (L.map checkerType2Type ts)

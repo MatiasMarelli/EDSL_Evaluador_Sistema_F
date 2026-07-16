@@ -41,7 +41,7 @@ pp iv it fv ft (Lam t l) =
   text "\\" 
   <> text (fv !! iv)
   <> text ":"
-  <> printType it ft t
+  <> printType' it ft t
   <> text ". "
   <> pp (iv+1) it fv ft l
 
@@ -54,7 +54,7 @@ pp iv it fv ft (LamT l) =
 pp iv it fv ft (AppT l xs) =
   pp iv it fv ft l 
   <> text " <"
-  <> sep (foldr (:) [] (map (printType it ft) xs))
+  <> sep (foldr (:) [] (map (printType' it ft) xs))
   <> text ">"
 
 isLam :: LocalTerm -> Bool
@@ -74,18 +74,18 @@ isUni (Uni _)   = True
 isUni _         = False
 
 
-printType :: Int -> [String] -> LocalType -> Doc
-printType it ft (BoundT k)   = text (ft !! (it-k-1))
-printType it ft (FreeT n xs) = text n <>  if (null xs) then sep (map (printType it ft) xs) else parens (sep (map (printType it ft) xs))
+printType' :: Int -> [String] -> LocalType -> Doc
+printType' it ft (BoundT k)   = text (ft !! (it-k-1))
+printType' it ft (FreeT n xs) = text n <>  if (null xs) then sep (map (printType' it ft) xs) else parens (sep (map (printType' it ft) xs))
 
-printType it ft (Uni t) =
+printType' it ft (Uni t) =
   text "\\/"
   <> text (ft !! it)
   <> text ". "
-  <> printType (it +1) ft t
+  <> printType' (it +1) ft t
 
-printType it ft (Fun t t') = 
-  hsep [parensIf (isFun t || isUni t) (printType it ft t), text "->", printType it ft t']
+printType' it ft (Fun t t') = 
+  hsep [parensIf (isFun t || isUni t) (printType' it ft t), text "->", printType' it ft t']
 
 freeTerms :: LocalTerm -> [String]
 freeTerms (Bound _ )  = []
@@ -111,3 +111,6 @@ freeTypes' (Fun t1 t2) = (freeTypes' t1 ) ++ (freeTypes' t2)
 
 printTerm :: LocalTerm -> Doc
 printTerm t = pp 0 0 (filter (\v -> not $ elem v (freeTerms t)) varsTerm) (filter (\v -> not $ elem v (freeTypes t)) varsType) t
+
+printType :: LocalType -> Doc
+printType t = printType' 0 (filter (\v -> not $ elem v (freeTypes' t)) varsType) t

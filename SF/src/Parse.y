@@ -154,7 +154,7 @@ lexer cont s = case s of
                     where lexVar s = case span isAlpha s of
                                      ("def",rest ) -> cont TDef rest
                                      ((c:cs),rest) | isUpper c -> cont (TVarT (c:cs)) rest
-                                                   | otherwise -> cont (TVar (c:cs)) rest 
+                                                   | otherwise -> cont (TVar (c:cs))  rest 
 
 
 expPar s  = par s 1
