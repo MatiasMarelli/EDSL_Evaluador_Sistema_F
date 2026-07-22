@@ -24,8 +24,7 @@ Esto abrira una consola en la cual podremos ejecutar diversos comandos.
 
 Una parte clave para un funcionamiento comodo es tener un archivo con definiciones previas.
 ## Ejemplo rápido
-
-Un archivo `.lam` se escribe así:
+Los archivos deben ser definidos dentro de el directorio Files. Un archivo `.lam` se escribe así:
 
 ```
 def Nat := 4 N . ((N -> N) -> N -> N)
@@ -43,7 +42,7 @@ def tres = suc (suc (suc zero))
 Uso de la consola consola:
 
 ```
-SF> :c naturales.lam
+SF> :c naturales
 Variables loaded: 4
 SF> :e tres
 /\X. \x:X -> X. \y:X. x

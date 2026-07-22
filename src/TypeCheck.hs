@@ -68,13 +68,13 @@ type2CheckType' c (FunT t1 t2) = CFun (f t1) (f t2)
 
 --Buscamos en el State que tengamos en ese momento
 lookContext :: String -> [(String,CheckerType)] -> Maybe CheckerType
-lookContext n []     = Nothing
+lookContext _ []     = Nothing
 lookContext n (x:xs) | n == (fst x) = Just $ snd x  
                      | otherwise    = lookContext n xs
 
 --Un map para el Bind (>>=)
 map' :: String -> CheckerType -> [CheckerType] -> TypeChecker [CheckerType]
-map' n t []     = return []
+map' _ _ []     = return []
 map' n t (x:xs) = subType'' n t x >>= (\t' -> map' n t xs >>= \ts -> return (t': ts))
 
 --Reducimos los tipos luego de un Instance
@@ -135,15 +135,15 @@ infer' e c a@(CApp l1 l2) = infer' e c l1 >>= (\t1 ->
                              CFun t1' t1'' -> if t1' == t2 
                                               then return t1''
                                               else err $ "Expected a " ++ showtype t1' ++ " but receive a "++showtype t2 ++ " in " ++ showterm l1 
-                             _             -> err $ "Expected a Function but receive: " ++ showtype t1 ++ " in " ++ showterm l1))
+                             _             -> err $ "Expected a Function but receive: " ++ showtype t1 ++ " in " ++ showterm a))
 infer' e c (CTAbs t l)  = case t of 
                           (CBound n)  -> infer' e c l >>= \t' -> return $ CUni n t'
                           _           -> err $ "Not expected a: "++ showtype t ++ " next to TypeAbstraction"
 infer' e c (CTApp l ts) =  infer' e c l >>= \t' -> case t' of 
                                                      CDef n xs -> case M.lookup n e of 
                                                                     Just(Right t) -> instanceType (type2CheckType t) (xs ++ ts)
-                                                                    _             -> err $"Variable "++ (show n ) ++ " not defined"
-                                                     CUni n t  -> instanceType t' ts
+                                                                    _             -> err $ "Variable "++ (show n ) ++ " not defined"
+                                                     CUni _ _  -> instanceType t' ts
                                                      _         -> err $ "Bad instantiation didnt expect "++ showtype t'                     
 
 
@@ -155,7 +155,7 @@ isConstructor :: Env -> CheckerType -> TypeChecker CheckerType
 isConstructor e (CFun t' t) = isConstructor e t >>= \t'' -> return $ CFun t' t'' 
 isConstructor e (CDef n xs) = case M.lookup n e of 
                                 Just(Right t) -> instanceType (type2CheckType t) xs
-                                _             -> err $"Variable "++ (show n ) ++ " not defined"
+                                _             -> err $ "Variable "++ (show n ) ++ " not defined"
 isConstructor e (CUni n t)  = isConstructor e t >>= \t' -> return (CUni n t')
 isConstructor _ t           = return t
 
