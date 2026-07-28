@@ -13,6 +13,7 @@ Esto abrira una consola en la cual podremos ejecutar diversos comandos.
 | Comando | Qué hace |
 |---|---|
 | `:c archivo.lam` | Carga un archivo con definiciones |
+| `:t <expresión>` | Imprime el tipo que se infiere de la expresión dada |
 | `:e <expresión>` | Evalúa una expresión y muestra el resultado |
 | `:a <expresión>` | Muestra el AST de una expresión |
 | `:b <nombre>` | Muestra el valor o tipo de una variable cargada |
